@@ -1,7 +1,10 @@
 import express from 'express'
-import createUserHandler from '../controller/user.controller'
+import {
+  createUserHandler,
+  verifyUserHandler,
+} from '../controller/user.controller'
 import validator from '../middelware/validator'
-import { createUserSchema } from '../schema/user.schema'
+import { createUserSchema, verifyUserSchema } from '../schema/user.schema'
 
 const UserRouter = express.Router()
 
@@ -9,5 +12,11 @@ UserRouter.post(
   '/api/user/signup',
   validator(createUserSchema),
   createUserHandler
+)
+
+UserRouter.post(
+  '/api/user/verification/:id/:verificationCode',
+  validator(verifyUserSchema),
+  verifyUserHandler
 )
 export default UserRouter
