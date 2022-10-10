@@ -65,4 +65,6 @@ const verifyUserHandler = async (
 
   return res.send('Error verifying user')
 }
+
+const testci = () => {}
 export { createUserHandler, verifyUserHandler }
