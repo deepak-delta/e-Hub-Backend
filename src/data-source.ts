@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm'
 import { User } from './entity/user.entity'
 
-const sqlDS = new DataSource({
+const mongoProdDS = new DataSource({
   type: 'mongodb',
   url: process.env.MONGOURI,
   useNewUrlParser: true,
@@ -12,4 +12,16 @@ const sqlDS = new DataSource({
   authSource: 'admin',
 })
 
-export default sqlDS
+const mongoDevDS = new DataSource({
+  type: 'mongodb',
+  host: 'localhost',
+  port: 27017,
+  database: 'ehub',
+  entities: [User],
+  synchronize: true,
+  logging: false,
+})
+
+const mongoDS = process.env.PROD === 'true' ? mongoProdDS : mongoDevDS
+
+export default mongoDS

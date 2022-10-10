@@ -1,8 +1,33 @@
 import { Request, Response } from 'express'
-import { createUserInput, verifyUserInput } from '../schema/user.schema'
-import { createUser, findUserById, updateUser } from '../service/user.service'
+import {
+  createUserInput,
+  forgotPasswordInput,
+  verifyUserInput,
+} from '../schema/user.schema'
+import {
+  createUser,
+  findUserById,
+  fingByEmail,
+  updateUser,
+} from '../service/user.service'
 import sendEmail from '../utils/mailer'
 import argon2 from 'argon2'
+import { v4 as uuidv4 } from 'uuid'
+
+const callSendEmail = async (
+  userEmail: string,
+  userCode: string,
+  subject: string
+) => {
+  try {
+    await sendEmail({
+      from: 'test@testing.com',
+      to: userEmail,
+      subject: subject,
+      text: `code: ${userCode}`,
+    })
+  } catch (error) {}
+}
 
 const createUserHandler = async (
   req: Request<{}, {}, createUserInput>,
@@ -23,18 +48,25 @@ const createUserHandler = async (
     console.log(err)
   }
 
-  const requestBody = { ...body, verificationCode }
-
-  console.log(requestBody)
+  const requestBody = {
+    ...body,
+    id: uuidv4().substring(0, 13),
+    verificationCode: verificationCode.toString(),
+    verified: false,
+    passwordResetCode: '',
+  }
 
   try {
+    // const user = await fingByEmail(body.email)
+    // if (!user) {
+    //   const user = await createUser(requestBody)
+    //   callSendEmail(user.email, user.verificationCode, 'Verifiaction Code')
+    //   return res.send(user)
+    // } else {
+    //   return res.send('User already exist')
+    // }
     const user = await createUser(requestBody)
-    await sendEmail({
-      from: 'test@testing.com',
-      to: user.email,
-      subject: 'Verification',
-      text: `code: ${user.verificationCode}`,
-    })
+    callSendEmail(user.email, user.verificationCode, 'Verifiaction Code')
     return res.send(user)
   } catch (error) {}
 }
@@ -66,5 +98,28 @@ const verifyUserHandler = async (
   return res.send('Error verifying user')
 }
 
-const forgotPasswordHandler = () => {}
-export { createUserHandler, verifyUserHandler }
+const forgotPasswordHandler = async (
+  req: Request<{}, {}, forgotPasswordInput>,
+  res: Response
+) => {
+  const { email } = req.body
+
+  const user = await fingByEmail(email)
+
+  if (!user) {
+    console.log('User does not exist')
+  }
+
+  if (!user?.verified) {
+    return res.send('User is not verified')
+  }
+
+  const passwordResetCode = uuidv4()
+  user.passwordResetCode = passwordResetCode
+
+  await updateUser(user)
+  callSendEmail(user.email, user.passwordResetCode, 'Verifiaction Code')
+  return res.send('Password resest link will be sent if user exist')
+}
+
+export { createUserHandler, verifyUserHandler, forgotPasswordHandler }
