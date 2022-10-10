@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import {
   createUserInput,
   forgotPasswordInput,
+  ResetPasswordInput,
   verifyUserInput,
 } from '../schema/user.schema'
 import {
@@ -42,8 +43,8 @@ const createUserHandler = async (
 
   //Password Hashing
   try {
-    const hash = await argon2.hash(body.password)
-    body.password = hash
+    body.password = await argon2.hash(body.password)
+    body.confirmPassword = await argon2.hash(body.confirmPassword)
   } catch (err) {
     console.log(err)
   }
@@ -122,4 +123,35 @@ const forgotPasswordHandler = async (
   return res.send('Password resest link will be sent if user exist')
 }
 
-export { createUserHandler, verifyUserHandler, forgotPasswordHandler }
+const resetPasswordHandler = async (
+  req: Request<ResetPasswordInput['params'], {}, ResetPasswordInput['body']>,
+  res: Response
+) => {
+  const { id, passwordResetCode } = req.params
+  const { password } = req.body
+  const user = await findUserById(id)
+
+  if (
+    !user ||
+    !user.passwordResetCode ||
+    user.passwordResetCode !== passwordResetCode
+  ) {
+    return res.status(400).send('Could not reset user password')
+  }
+
+  user.passwordResetCode = ''
+  const hashedPassword = await argon2.hash(password)
+  user.password = hashedPassword
+  user.confirmPassword = hashedPassword
+
+  await updateUser(user)
+
+  return res.send('Successfully updated password')
+}
+
+export {
+  createUserHandler,
+  verifyUserHandler,
+  forgotPasswordHandler,
+  resetPasswordHandler,
+}

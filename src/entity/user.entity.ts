@@ -21,6 +21,9 @@ export class User {
   password: string
 
   @Column()
+  confirmPassword: string
+
+  @Column()
   verificationCode: string
 
   @Column({ default: true })
