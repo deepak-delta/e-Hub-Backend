@@ -1,6 +1,5 @@
 require('dotenv').config()
 import express from 'express'
-import config from 'config'
 import 'reflect-metadata'
 
 import router from './routes'
@@ -10,10 +9,10 @@ const app = express()
 app.use(express.json())
 app.use(router)
 
-const port = config.get('PORT')
+const PORT = process.env.PORT || 3001
 
-app.listen(port, () => {
-  console.log(`Server listining on ${port}`)
+app.listen(PORT, () => {
+  console.log(`Server listining on ${PORT}`)
 })
 
 sqlDS
