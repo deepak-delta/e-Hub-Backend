@@ -18,8 +18,5 @@ export class Session {
   userId: string
 
   @Column()
-  time: Timestamp
-
-  @Column()
   valid: boolean
 }
