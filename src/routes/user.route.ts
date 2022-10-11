@@ -2,9 +2,11 @@ import express from 'express'
 import {
   createUserHandler,
   forgotPasswordHandler,
+  getCurrentUserHandler,
   resetPasswordHandler,
   verifyUserHandler,
 } from '../controller/user.controller'
+import requireAuth from '../middelware/requireAuth'
 import validator from '../middelware/validator'
 import {
   createUserSchema,
@@ -38,4 +40,6 @@ UserRouter.post(
   validator(resetPasswordSchema),
   resetPasswordHandler
 )
+
+UserRouter.get('/api/users/currentuser', requireAuth, getCurrentUserHandler)
 export default UserRouter

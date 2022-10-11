@@ -8,7 +8,7 @@ import {
 import {
   createUser,
   findUserById,
-  fingByEmail,
+  findByEmail,
   updateUser,
 } from '../service/user.service'
 import sendEmail from '../utils/mailer'
@@ -58,17 +58,14 @@ const createUserHandler = async (
   }
 
   try {
-    // const user = await fingByEmail(body.email)
-    // if (!user) {
-    //   const user = await createUser(requestBody)
-    //   callSendEmail(user.email, user.verificationCode, 'Verifiaction Code')
-    //   return res.send(user)
-    // } else {
-    //   return res.send('User already exist')
-    // }
-    const user = await createUser(requestBody)
-    callSendEmail(user.email, user.verificationCode, 'Verifiaction Code')
-    return res.send(user)
+    const user = await findByEmail(body.email)
+    if (!user) {
+      const user = await createUser(requestBody)
+      callSendEmail(user.email, user.verificationCode, 'Verifiaction Code')
+      return res.send(user)
+    } else {
+      return res.send('User already exist')
+    }
   } catch (error) {}
 }
 
@@ -105,7 +102,7 @@ const forgotPasswordHandler = async (
 ) => {
   const { email } = req.body
 
-  const user = await fingByEmail(email)
+  const user = await findByEmail(email)
 
   if (!user) {
     console.log('User does not exist')
@@ -149,9 +146,14 @@ const resetPasswordHandler = async (
   return res.send('Successfully updated password')
 }
 
+const getCurrentUserHandler = async (req: Request, res: Response) => {
+  return res.send(res.locals.user)
+}
+
 export {
   createUserHandler,
   verifyUserHandler,
   forgotPasswordHandler,
   resetPasswordHandler,
+  getCurrentUserHandler,
 }

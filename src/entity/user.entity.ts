@@ -31,4 +31,5 @@ export class User {
 
   @Column({ default: 'test' })
   passwordResetCode: string
+  toJSON: any
 }

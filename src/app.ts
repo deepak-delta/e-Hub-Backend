@@ -6,9 +6,11 @@ import 'reflect-metadata'
 import router from './routes'
 import mongoDS from './data-source'
 import { boolean } from 'zod'
+import deserializeUser from './middelware/deserializeUser'
 
 const app = express()
 app.use(express.json())
+app.use(deserializeUser)
 app.use(router)
 
 const PORT = process.env.PORT || 3001

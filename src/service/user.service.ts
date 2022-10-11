@@ -5,7 +5,6 @@ const userRepository = mongoDS.getRepository(User)
 const createUser = async (userData: any) => {
   await userRepository.save(userData)
   console.log('User has been saved')
-
   return userData
 }
 
@@ -21,11 +20,11 @@ const findUserById = async (id: string) => {
   return user
 }
 
-const fingByEmail = async (email: any) => {
+const findByEmail = async (email: any) => {
   const user = await mongoDS.getMongoRepository(User).findOneBy({
     email: email,
   })
 
   return user
 }
-export { createUser, findUserById, updateUser, fingByEmail }
+export { createUser, findUserById, updateUser, findByEmail }

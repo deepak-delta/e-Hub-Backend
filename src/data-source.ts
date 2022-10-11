@@ -1,11 +1,12 @@
 import { DataSource } from 'typeorm'
+import { Session } from './entity/auth.entity'
 import { User } from './entity/user.entity'
 
 const mongoProdDS = new DataSource({
   type: 'mongodb',
   url: process.env.MONGOURI,
   useNewUrlParser: true,
-  entities: [User],
+  entities: [User, Session],
   synchronize: true,
   logging: false,
   ssl: true,
@@ -17,7 +18,7 @@ const mongoDevDS = new DataSource({
   host: 'localhost',
   port: 27017,
   database: 'ehub',
-  entities: [User],
+  entities: [User, Session],
   synchronize: true,
   logging: false,
 })

@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken'
+import { string } from 'zod'
 import { jwtKeys } from '../config'
 
 const signJwt = (
@@ -6,13 +7,14 @@ const signJwt = (
   keyName: 'accessTokenPrivateKey' | 'refreshTokenPrivateKey',
   options?: jwt.SignOptions | undefined
 ) => {
-  const keyType =
+  const keyType: any =
     keyName === 'accessTokenPrivateKey'
       ? jwtKeys.accessTokenPrivateKey
       : jwtKeys.refreshTokenPrivateKey
+
   const signingKey = Buffer.from(keyType, 'base64').toString('ascii')
 
-  return jwt.sign(object, signingKey, {
+  return jwt.sign({ object }, signingKey, {
     ...(options && options),
     algorithm: 'RS256',
   })
@@ -22,7 +24,7 @@ const verifyJwt = <T>(
   token: string,
   keyName: 'accessTokenPublicKey' | 'refreshTokenPublicKey'
 ): T | null => {
-  const keyType =
+  const keyType: any =
     keyName === 'accessTokenPublicKey'
       ? jwtKeys.accessTokenPublicKey
       : jwtKeys.refreshTokenPublicKey
@@ -36,4 +38,4 @@ const verifyJwt = <T>(
   }
 }
 
-export default { signJwt, verifyJwt }
+export { signJwt, verifyJwt }

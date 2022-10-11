@@ -1,5 +1,5 @@
 import nodemailer, { SendMailOptions } from 'nodemailer'
-import smtp from '../config'
+import { smtp } from '../config'
 
 // const createTestCreds = async () => {
 //   const creds = await nodemailer.createTestAccount()
