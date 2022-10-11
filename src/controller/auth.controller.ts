@@ -40,7 +40,6 @@ const createLoginHandler = async (
         const refreshToken = await signRefreshToken(user.id)
 
         //send token
-
         return res.send({
           accessToken,
           refreshToken,
