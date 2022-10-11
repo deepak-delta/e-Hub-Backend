@@ -1,9 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, ObjectIdColumn } from 'typeorm'
+import { Entity, Column, ObjectIdColumn, PrimaryColumn } from 'typeorm'
 
 @Entity()
 export class User {
   @ObjectIdColumn()
-  id: number
+  _id: string
+
+  @PrimaryColumn()
+  id: string
 
   @Column()
   firstName: string
@@ -18,8 +21,15 @@ export class User {
   password: string
 
   @Column()
+  confirmPassword: string
+
+  @Column()
   verificationCode: string
 
-  @Column({ default: false })
+  @Column({ default: true })
   verified: boolean
+
+  @Column({ default: 'test' })
+  passwordResetCode: string
+  toJSON: any
 }

@@ -1,8 +1,34 @@
 import { Request, Response } from 'express'
-import { createUserInput, verifyUserInput } from '../schema/user.schema'
-import { createUser, findUserById, updateUser } from '../service/user.service'
+import {
+  createUserInput,
+  forgotPasswordInput,
+  ResetPasswordInput,
+  verifyUserInput,
+} from '../schema/user.schema'
+import {
+  createUser,
+  findUserById,
+  findByEmail,
+  updateUser,
+} from '../service/user.service'
 import sendEmail from '../utils/mailer'
 import argon2 from 'argon2'
+import { v4 as uuidv4 } from 'uuid'
+
+const callSendEmail = async (
+  userEmail: string,
+  userCode: string,
+  subject: string
+) => {
+  try {
+    await sendEmail({
+      from: 'test@testing.com',
+      to: userEmail,
+      subject: subject,
+      text: `code: ${userCode}`,
+    })
+  } catch (error) {}
+}
 
 const createUserHandler = async (
   req: Request<{}, {}, createUserInput>,
@@ -17,25 +43,29 @@ const createUserHandler = async (
 
   //Password Hashing
   try {
-    const hash = await argon2.hash(body.password)
-    body.password = hash
+    body.password = await argon2.hash(body.password)
+    body.confirmPassword = await argon2.hash(body.confirmPassword)
   } catch (err) {
     console.log(err)
   }
 
-  const requestBody = { ...body, verificationCode }
-
-  console.log(requestBody)
+  const requestBody = {
+    ...body,
+    id: uuidv4().substring(0, 13),
+    verificationCode: verificationCode.toString(),
+    verified: false,
+    passwordResetCode: '',
+  }
 
   try {
-    const user = await createUser(requestBody)
-    await sendEmail({
-      from: 'test@testing.com',
-      to: user.email,
-      subject: 'Verification',
-      text: `code: ${user.verificationCode}`,
-    })
-    return res.send(user)
+    const user = await findByEmail(body.email)
+    if (!user) {
+      const user = await createUser(requestBody)
+      callSendEmail(user.email, user.verificationCode, 'Verifiaction Code')
+      return res.send(user)
+    } else {
+      return res.send('User already exist')
+    }
   } catch (error) {}
 }
 
@@ -66,5 +96,64 @@ const verifyUserHandler = async (
   return res.send('Error verifying user')
 }
 
-const forgotPasswordHandler = () => {}
-export { createUserHandler, verifyUserHandler }
+const forgotPasswordHandler = async (
+  req: Request<{}, {}, forgotPasswordInput>,
+  res: Response
+) => {
+  const { email } = req.body
+
+  const user = await findByEmail(email)
+
+  if (!user) {
+    console.log('User does not exist')
+  }
+
+  if (!user?.verified) {
+    return res.send('User is not verified')
+  }
+
+  const passwordResetCode = uuidv4()
+  user.passwordResetCode = passwordResetCode
+
+  await updateUser(user)
+  callSendEmail(user.email, user.passwordResetCode, 'Verifiaction Code')
+  return res.send('Password resest link will be sent if user exist')
+}
+
+const resetPasswordHandler = async (
+  req: Request<ResetPasswordInput['params'], {}, ResetPasswordInput['body']>,
+  res: Response
+) => {
+  const { id, passwordResetCode } = req.params
+  const { password } = req.body
+  const user = await findUserById(id)
+
+  if (
+    !user ||
+    !user.passwordResetCode ||
+    user.passwordResetCode !== passwordResetCode
+  ) {
+    return res.status(400).send('Could not reset user password')
+  }
+
+  user.passwordResetCode = ''
+  const hashedPassword = await argon2.hash(password)
+  user.password = hashedPassword
+  user.confirmPassword = hashedPassword
+
+  await updateUser(user)
+
+  return res.send('Successfully updated password')
+}
+
+const getCurrentUserHandler = async (req: Request, res: Response) => {
+  return res.send(res.locals.user)
+}
+
+export {
+  createUserHandler,
+  verifyUserHandler,
+  forgotPasswordHandler,
+  resetPasswordHandler,
+  getCurrentUserHandler,
+}
